@@ -159,22 +159,26 @@ async function generateRawCertificate(certificate, templateUrl, entityId, entity
     const qrCodeType = config.QR_TYPE || '';
     let qrData;
     console.log('QR Code type: ', qrCodeType);
-    if (qrCodeType.toUpperCase() === URL) {
-        qrData = `${config.CERTIFICATE_DOMAIN_URL}/certs/${entityId}?t=${qrCodeType}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
+    if (!entityId) {
+        qrData = certificateRaw
     } else {
-        const zip = new JSZip();
-        zip.file("certificate.json", certificateRaw, {
-            compression: "DEFLATE"
-        });
-        const zipType = (qrCodeType && qrCodeType.toUpperCase() === URL_W3C_VC);
-        const zippedData = await zip.generateAsync({type: zipType ? 'base64': 'string', compression: "DEFLATE"})
-            .then(function (content) {
-                return content;
+        if (qrCodeType.toUpperCase() === URL) {
+            qrData = `${config.CERTIFICATE_DOMAIN_URL}/certs/${entityId}?t=${qrCodeType}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
+        } else {
+            const zip = new JSZip();
+            zip.file("certificate.json", certificateRaw, {
+                compression: "DEFLATE"
             });
-        qrData = zippedData
-        if (zipType) {
-            console.log('ZippedData length', String(zippedData).length);
-            qrData = `${config.CERTIFICATE_DOMAIN_URL}/certs/${entityId}?t=${config.QR_TYPE}&data=${zippedData}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
+            const zipType = (qrCodeType && qrCodeType.toUpperCase() === URL_W3C_VC);
+            const zippedData = await zip.generateAsync({type: zipType ? 'base64': 'string', compression: "DEFLATE"})
+                .then(function (content) {
+                    return content;
+                });
+            qrData = zippedData
+            if (zipType) {
+                console.log('ZippedData length', String(zippedData).length);
+                qrData = `${config.CERTIFICATE_DOMAIN_URL}/certs/${entityId}?t=${config.QR_TYPE}&data=${zippedData}&entity=${entityName}${process.env.ADDITIONAL_QUERY_PARAMS || ""}`;
+            }
         }
     }
 
